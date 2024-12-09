@@ -2,14 +2,23 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-class CustomTimePickerDialog extends StatefulWidget {
-  const CustomTimePickerDialog({super.key});
+class AnalogTimePickerDialog extends StatefulWidget {
+  const AnalogTimePickerDialog({super.key});
 
   @override
-  State<CustomTimePickerDialog> createState() => _CustomTimePickerDialogState();
+  State<AnalogTimePickerDialog> createState() => _AnalogTimePickerDialogState();
+
+  static Future<TimeOfDay?> show(BuildContext context) {
+    return showDialog<TimeOfDay>(
+      context: context,
+      builder: (context) {
+        return AnalogTimePickerDialog();
+      },
+    );
+  }
 }
 
-class _CustomTimePickerDialogState extends State<CustomTimePickerDialog> {
+class _AnalogTimePickerDialogState extends State<AnalogTimePickerDialog> {
   late int selectedHour;
   late int selectedMinute;
   bool isHourSelectionActive = true;
@@ -26,61 +35,69 @@ class _CustomTimePickerDialogState extends State<CustomTimePickerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: 16),
       title: Text(
         "Select Time",
         style: Theme.of(context).textTheme.labelLarge,
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TimeDisplay(
-            selectedHour: selectedHour,
-            selectedMinute: selectedMinute,
-            isHourSelectionActive: isHourSelectionActive,
-            isAm: isAm,
-            onHourTap: () {
-              setState(() {
-                isHourSelectionActive = true;
-              });
-            },
-            onMinuteTap: () {
-              setState(() {
-                isHourSelectionActive = false;
-              });
-            },
-            onAmTap: () {
-              setState(() {
-                isAm = true;
-              });
-            },
-            onPmTap: () {
-              setState(() {
-                isAm = false;
-              });
-            },
-          ),
-          SizedBox(height: 20),
-
-          // Dial with custom painter
-          AspectRatio(
-            aspectRatio: 1,
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                handlePanUpdate(details);
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            /// Time display
+            TimeDisplay(
+              selectedHour: selectedHour,
+              selectedMinute: selectedMinute,
+              isHourSelectionActive: isHourSelectionActive,
+              isAm: isAm,
+              onHourTap: () {
+                setState(() {
+                  isHourSelectionActive = true;
+                });
               },
-              child: CustomPaint(
-                painter: ClockPainter(
-                    selectedHour, selectedMinute, isHourSelectionActive),
+              onMinuteTap: () {
+                setState(() {
+                  isHourSelectionActive = false;
+                });
+              },
+              onAmTap: () {
+                setState(() {
+                  isAm = true;
+                });
+              },
+              onPmTap: () {
+                setState(() {
+                  isAm = false;
+                });
+              },
+            ),
+            SizedBox(height: 20),
+
+            /// Dial with custom painter
+            AspectRatio(
+              aspectRatio: 1,
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  handlePanUpdate(details);
+                },
+                child: CustomPaint(
+                  painter: ClockPainter(
+                      selectedHour, selectedMinute, isHourSelectionActive),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
+        /// Cancel button
         TextButton(
           onPressed: () => Navigator.pop(context, null),
           child: Text("Cancel"),
         ),
+
+        /// OK button
         TextButton(
           onPressed: () {
             Navigator.pop(
@@ -223,7 +240,7 @@ class ClockPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw clock face
+    /// Draw clock face
     Paint paintCircle = Paint()
       ..color = Colors.grey[300]!
       ..style = PaintingStyle.fill;
@@ -231,13 +248,13 @@ class ClockPainter extends CustomPainter {
     canvas.drawCircle(
         size.center(Offset.zero), size.width / 2 - 10, paintCircle);
 
-    // Draw hour markers
+    /// Draw hour markers
     for (int i = 1; i <= 12; i++) {
       double angle = (i * pi / 6); // Each hour is π/6 radians apart
       double xOuter =
-          size.width / 2 + cos(angle - pi / 2) * (size.width / 2 - 30);
+          size.width / 2 + cos(angle - pi / 2) * (size.width / 2 - 60);
       double yOuter =
-          size.height / 2 + sin(angle - pi / 2) * (size.height / 2 - 30);
+          size.height / 2 + sin(angle - pi / 2) * (size.height / 2 - 60);
 
       // Draw hour text
       TextPainter textPainter = TextPainter(
@@ -254,13 +271,13 @@ class ClockPainter extends CustomPainter {
               xOuter - textPainter.width / 2, yOuter - textPainter.height / 2));
     }
 
-    // Draw minute markers
+    /// Draw minute markers
     for (int i = 0; i < 60; i += 5) {
       double angle = (i * pi / 30); // Each minute is π/30 radians apart
       double xOuter =
-          size.width / 2 + cos(angle - pi / 2) * (size.width / 2 - 50);
+          size.width / 2 + cos(angle - pi / 2) * (size.width / 2 - 30);
       double yOuter =
-          size.height / 2 + sin(angle - pi / 2) * (size.height / 2 - 50);
+          size.height / 2 + sin(angle - pi / 2) * (size.height / 2 - 30);
 
       // Draw minute text
       TextPainter minuteTextPainter = TextPainter(
@@ -280,28 +297,30 @@ class ClockPainter extends CustomPainter {
     // Draw hour hand
     double hourAngle = ((hour % 12) + (minute / 60)) * pi / 6;
     drawHand(
-        canvas,
-        size.center(Offset.zero),
-        hourAngle,
-        size.width * .25,
-        Paint()
-          ..color = Colors.blue
-          ..strokeWidth = 8
-          ..style = PaintingStyle.stroke);
+      canvas,
+      size.center(Offset.zero),
+      hourAngle,
+      size.width * .25,
+      Paint()
+        ..color = Colors.blue
+        ..strokeWidth = 8
+        ..style = PaintingStyle.stroke,
+    );
 
     // Draw minute hand
     double minuteAngle = minute * pi / 30;
     drawHand(
-        canvas,
-        size.center(Offset.zero),
-        minuteAngle,
-        size.width * .35,
-        Paint()
-          ..color = Colors.red
-          ..strokeWidth = 4
-          ..style = PaintingStyle.stroke);
+      canvas,
+      size.center(Offset.zero),
+      minuteAngle,
+      size.width * .35,
+      Paint()
+        ..color = Colors.red
+        ..strokeWidth = 4
+        ..style = PaintingStyle.stroke,
+    );
 
-    // Draw center point
+    /// Draw center point
     canvas.drawCircle(size.center(Offset.zero), size.width * .05,
         Paint()..color = Colors.black);
   }

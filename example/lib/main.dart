@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
           /// Better Time Picker Floating Action Button
           FloatingActionButton.extended(
             onPressed: () async {
-              final time = await showCustomTimePicker(context);
+              final time = await AnalogTimePickerDialog.show(context);
               if (time != null) {
                 setState(() {
                   _selectedTime = time;
@@ -90,19 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
             icon: const Icon(Icons.access_time),
-            label: Text('Open Better Picker'),
+            label: Text('Open Better Time Picker'),
           ),
         ],
       ),
-    );
-  }
-
-  Future<TimeOfDay?> showCustomTimePicker(BuildContext context) {
-    return showDialog<TimeOfDay>(
-      context: context,
-      builder: (context) {
-        return CustomTimePickerDialog();
-      },
     );
   }
 }
