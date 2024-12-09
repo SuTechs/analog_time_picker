@@ -20,7 +20,7 @@ To use the Analog Time Picker in your Flutter project, add it to your `pubspec.y
 
 ```yaml
 dependencies:
-  analog_time_picker: ^1.0.0
+  analog_time_picker: ^0.0.2
 ```
 
 ## Usage
