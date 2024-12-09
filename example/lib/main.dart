@@ -1,4 +1,4 @@
-import 'package:analog_time_picker/analog_time_picker.dart';
+import 'package:analog_time_picker/better_analog_time_picker.dart';
 import 'package:flutter/material.dart';
 
 void main() {

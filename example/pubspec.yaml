@@ -46,7 +46,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
-  analog_time_picker:
+  better_analog_time_picker:
     # When depending on this package from a real application you should use:
     #   analog_time_picker: ^x.y.z
     # See https://dart.dev/tools/pub/dependencies#version-constraints

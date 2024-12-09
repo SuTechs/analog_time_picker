@@ -1,7 +1,8 @@
-name: analog_time_picker
+name: better_analog_time_picker
 description: "A better analog time picker"
-version: 1.0.0
-homepage:
+version: 0.0.1
+homepage: "https://pythagon.com"
+repository: "https://github.com/SuTechs/analog_time_picker"
 
 environment:
   sdk: ^3.6.0-334.3.beta
