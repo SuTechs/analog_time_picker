@@ -1,9 +1,10 @@
 # Analog Time Picker Plugin
+[Pub.dev](https://pub.dev/packages/better_analog_time_picker)
 
 A customizable analog time picker for Flutter that allows users to select time easily with an intuitive interface. This plugin supports AM/PM selections, restricts time ranges, and provides an elegant clock UI.
 
 ## Example Preview
-<img src="demo.png" alt="Analog Time Picker Preview" width="280">
+<img src="https://raw.githubusercontent.com/SuTechs/analog_time_picker/refs/heads/main/demo.png" alt="Analog Time Picker Preview" width="280">
 
 ## Features
 
@@ -60,6 +61,8 @@ ElevatedButton(
   child: const Text("Pick a Time"),
 )
 ```
+## Pub Link
+The package is on [Pub.dev](https://pub.dev/packages/better_analog_time_picker).
 
 ## Customization
 You can customize the appearance of the clock by modifying the ClockPainter class in the plugin. Adjust colors, sizes, and styles to fit your app's design.
