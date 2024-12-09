@@ -1,6 +1,6 @@
 name: analog_time_picker
 description: "A better analog time picker"
-version: 0.0.1
+version: 1.0.0
 homepage:
 
 environment:

@@ -1,39 +1,71 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Analog Time Picker Plugin
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+A customizable analog time picker for Flutter that allows users to select time easily with an intuitive interface. This plugin supports AM/PM selections, restricts time ranges, and provides an elegant clock UI.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## Example Preview
+<img src="demo.png" alt="Analog Time Picker Preview" width="280">
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- **Customizable Initial Time**: Set the initial time when the picker is opened.
+- **Time Range Restrictions**: Prevent users from selecting times outside a specified range (e.g., past times).
+- **AM/PM Support**: Easily switch between AM and PM formats.
+- **Intuitive UI**: A visually appealing analog clock interface for time selection.
+- **User Interaction**: Users can drag the hands of the clock or tap on hour/minute markers to select time.
 
-## Getting started
+## Installation
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+To use the Analog Time Picker in your Flutter project, add it to your `pubspec.yaml`:
 
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
-```dart
-const like = 'sample';
+```yaml
+dependencies:
+  analog_time_picker: ^1.0.0
 ```
 
-## Additional information
+## Usage
+To display the Analog Time Picker, use the following code snippet:
+```dart
+final currentTime = TimeOfDay.now();
+final minTime = TimeOfDay(hour: currentTime.hour, minute: currentTime.minute + 10); // Example minimum time
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+final time = await AnalogTimePickerDialog.show(
+  context,
+  initialTime: currentTime,
+  minTime: minTime,
+  // maxTime: TimeOfDay(hour: currentTime.hour + 2, minute: currentTime.minute + 10), // Optional max time
+);
+```
+
+## Parameters:
+- `initialTime`: The initial time displayed when the picker opens.
+- `minTime`: The minimum allowed time (e.g., to prevent past time selection).
+- `maxTime`: The maximum allowed time (optional).
+
+## Example Usage
+```dart
+ElevatedButton(
+  onPressed: () async {
+    final selectedTime = await AnalogTimePickerDialog.show(
+      context,
+      initialTime: currentTime,
+      minTime: minTime,
+      // maxTime: TimeOfDay(hour: currentTime.hour + 2, minute: currentTime.minute + 10),
+    );
+
+    if (selectedTime != null) {
+      // Handle selected time
+      print("Selected Time: ${selectedTime.format(context)}");
+    }
+  },
+  child: const Text("Pick a Time"),
+)
+```
+
+## Customization
+You can customize the appearance of the clock by modifying the ClockPainter class in the plugin. Adjust colors, sizes, and styles to fit your app's design.
+
+## Contributing
+Contributions are welcome! If you have suggestions or improvements, please create a pull request or open an issue.
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
