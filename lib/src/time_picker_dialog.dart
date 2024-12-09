@@ -2,17 +2,38 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'clock_painter.dart';
+import 'time_display.dart';
+
 class AnalogTimePickerDialog extends StatefulWidget {
-  const AnalogTimePickerDialog({super.key});
+  final TimeOfDay? initialTime;
+  final TimeOfDay? minTime;
+  final TimeOfDay? maxTime;
+
+  const AnalogTimePickerDialog({
+    super.key,
+    this.initialTime,
+    this.minTime,
+    this.maxTime,
+  });
 
   @override
   State<AnalogTimePickerDialog> createState() => _AnalogTimePickerDialogState();
 
-  static Future<TimeOfDay?> show(BuildContext context) {
+  static Future<TimeOfDay?> show(
+    BuildContext context, {
+    TimeOfDay? initialTime,
+    TimeOfDay? minTime,
+    TimeOfDay? maxTime,
+  }) {
     return showDialog<TimeOfDay>(
       context: context,
       builder: (context) {
-        return AnalogTimePickerDialog();
+        return AnalogTimePickerDialog(
+          initialTime: initialTime,
+          minTime: minTime,
+          maxTime: maxTime,
+        );
       },
     );
   }
@@ -27,9 +48,26 @@ class _AnalogTimePickerDialogState extends State<AnalogTimePickerDialog> {
   @override
   void initState() {
     super.initState();
-    final now = TimeOfDay.now();
-    selectedHour = now.hour % 12 == 0 ? 12 : now.hour % 12;
-    selectedMinute = (now.minute ~/ 5) * 5;
+
+    // Initialize selected time based on provided initial time or current time
+    final time = widget.initialTime ?? TimeOfDay.now();
+
+    final minTime = widget.minTime;
+    final maxTime = widget.maxTime;
+
+    if (minTime != null && time.isBefore(minTime)) {
+      _updateSelectedTime(minTime);
+    } else if (maxTime != null && time.isAfter(maxTime)) {
+      _updateSelectedTime(maxTime);
+    } else {
+      _updateSelectedTime(time);
+    }
+  }
+
+  void _updateSelectedTime(TimeOfDay time) {
+    selectedHour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    selectedMinute = time.minute ~/ 5 * 5;
+    isAm = time.hour < 12; // Determine AM/PM
   }
 
   @override
@@ -51,28 +89,12 @@ class _AnalogTimePickerDialogState extends State<AnalogTimePickerDialog> {
               selectedMinute: selectedMinute,
               isHourSelectionActive: isHourSelectionActive,
               isAm: isAm,
-              onHourTap: () {
-                setState(() {
-                  isHourSelectionActive = true;
-                });
-              },
-              onMinuteTap: () {
-                setState(() {
-                  isHourSelectionActive = false;
-                });
-              },
-              onAmTap: () {
-                setState(() {
-                  isAm = true;
-                });
-              },
-              onPmTap: () {
-                setState(() {
-                  isAm = false;
-                });
-              },
+              onHourTap: () => setState(() => isHourSelectionActive = true),
+              onMinuteTap: () => setState(() => isHourSelectionActive = false),
+              onAmTap: () => setState(() => isAm = true),
+              onPmTap: () => setState(() => isAm = false),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 16),
 
             /// Dial with custom painter
             AspectRatio(
@@ -83,7 +105,13 @@ class _AnalogTimePickerDialogState extends State<AnalogTimePickerDialog> {
                 },
                 child: CustomPaint(
                   painter: ClockPainter(
-                      selectedHour, selectedMinute, isHourSelectionActive),
+                    selectedHour,
+                    selectedMinute,
+                    isHourSelectionActive,
+                    widget.minTime,
+                    widget.maxTime,
+                    isAm,
+                  ),
                 ),
               ),
             ),
@@ -100,13 +128,23 @@ class _AnalogTimePickerDialogState extends State<AnalogTimePickerDialog> {
         /// OK button
         TextButton(
           onPressed: () {
-            Navigator.pop(
-              context,
-              TimeOfDay(
-                hour: selectedHour % 12,
-                minute: selectedMinute,
-              ),
+            final hour = isAm ? selectedHour % 12 : (selectedHour % 12) + 12;
+
+            final minTime = widget.minTime;
+            final maxTime = widget.maxTime;
+
+            final selectedTime = TimeOfDay(
+              hour: hour,
+              minute: selectedMinute,
             );
+
+            if (minTime != null && selectedTime.isBefore(minTime)) {
+              Navigator.pop(context);
+            } else if (maxTime != null && selectedTime.isAfter(maxTime)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pop(context, selectedTime);
+            }
           },
           child: Text("OK"),
         ),
@@ -121,217 +159,34 @@ class _AnalogTimePickerDialogState extends State<AnalogTimePickerDialog> {
     final angle = atan2(offset.dy - center.dy, offset.dx - center.dx);
     final adjustedAngle = (angle + pi / 2) % (2 * pi);
 
+    /// Update selected hour or minute based on the active selection
     setState(() {
       if (isHourSelectionActive) {
         selectedHour = (adjustedAngle / (2 * pi / 12)).round() % 12;
-        if (selectedHour == 0) selectedHour = 12; // Adjust for hour display
+        if (selectedHour == 0) selectedHour = 12;
       } else {
         selectedMinute = (adjustedAngle / (2 * pi / 60)).round() % 60;
-        selectedMinute =
-            (selectedMinute ~/ 5) * 5; // Snap to nearest five minutes
+        selectedMinute = (selectedMinute ~/ 5) * 5;
       }
+
+      /// Check if the new time falls within the allowed range and adjust accordingly
+      final newSelectedTime = TimeOfDay(
+          hour: selectedHour % 12 + (isAm ? 0 : 12), minute: selectedMinute);
+
+      final minTime = widget.minTime;
+      final maxTime = widget.maxTime;
+
+      if (minTime != null && newSelectedTime.isBefore(minTime)) {
+        _updateSelectedTime(minTime);
+        return;
+      } else if (maxTime != null && newSelectedTime.isAfter(maxTime)) {
+        _updateSelectedTime(maxTime);
+        return;
+      }
+
+      selectedHour =
+          newSelectedTime.hour % 12 == 0 ? 12 : newSelectedTime.hour % 12;
+      selectedMinute = newSelectedTime.minute;
     });
   }
-}
-
-class TimeDisplay extends StatelessWidget {
-  final int selectedHour;
-  final int selectedMinute;
-  final bool isHourSelectionActive;
-  final bool isAm;
-  final VoidCallback onHourTap;
-  final VoidCallback onMinuteTap;
-  final VoidCallback onAmTap;
-  final VoidCallback onPmTap;
-
-  const TimeDisplay({
-    super.key,
-    required this.selectedHour,
-    required this.selectedMinute,
-    required this.isHourSelectionActive,
-    required this.isAm,
-    required this.onHourTap,
-    required this.onMinuteTap,
-    required this.onAmTap,
-    required this.onPmTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: onHourTap,
-          child: Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isHourSelectionActive ? Colors.purple : null,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              selectedHour.toString().padLeft(2, '0'),
-              style: TextStyle(
-                fontSize: 32,
-                color: isHourSelectionActive ? Colors.white : null,
-              ),
-            ),
-          ),
-        ),
-        Text(
-          ":",
-          style: TextStyle(fontSize: 32),
-        ),
-        GestureDetector(
-          onTap: onMinuteTap,
-          child: Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: !isHourSelectionActive ? Colors.purple : null,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              selectedMinute.toString().padLeft(2, '0'),
-              style: TextStyle(
-                fontSize: 32,
-                color: !isHourSelectionActive ? Colors.white : null,
-              ),
-            ),
-          ),
-        ),
-        Spacer(),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onTap: onAmTap,
-              child: Text(
-                "AM",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: isAm ? FontWeight.bold : FontWeight.normal,
-                  color: isAm ? Colors.purple : null,
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: onPmTap,
-              child: Text(
-                "PM",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: !isAm ? FontWeight.bold : FontWeight.normal,
-                  color: !isAm ? Colors.purple : null,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class ClockPainter extends CustomPainter {
-  final int hour;
-  final int minute;
-  final bool isHourActive;
-
-  ClockPainter(this.hour, this.minute, this.isHourActive);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    /// Draw clock face
-    Paint paintCircle = Paint()
-      ..color = Colors.grey[300]!
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(
-        size.center(Offset.zero), size.width / 2 - 10, paintCircle);
-
-    /// Draw hour markers
-    for (int i = 1; i <= 12; i++) {
-      double angle = (i * pi / 6); // Each hour is π/6 radians apart
-      double xOuter =
-          size.width / 2 + cos(angle - pi / 2) * (size.width / 2 - 60);
-      double yOuter =
-          size.height / 2 + sin(angle - pi / 2) * (size.height / 2 - 60);
-
-      // Draw hour text
-      TextPainter textPainter = TextPainter(
-        text: TextSpan(
-          text: '$i',
-          style: TextStyle(fontSize: 16, color: Colors.black),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(
-          canvas,
-          Offset(
-              xOuter - textPainter.width / 2, yOuter - textPainter.height / 2));
-    }
-
-    /// Draw minute markers
-    for (int i = 0; i < 60; i += 5) {
-      double angle = (i * pi / 30); // Each minute is π/30 radians apart
-      double xOuter =
-          size.width / 2 + cos(angle - pi / 2) * (size.width / 2 - 30);
-      double yOuter =
-          size.height / 2 + sin(angle - pi / 2) * (size.height / 2 - 30);
-
-      // Draw minute text
-      TextPainter minuteTextPainter = TextPainter(
-        text: TextSpan(
-          text: '$i',
-          style: TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      minuteTextPainter.layout();
-      minuteTextPainter.paint(
-          canvas,
-          Offset(xOuter - minuteTextPainter.width / 2,
-              yOuter - minuteTextPainter.height / 2));
-    }
-
-    // Draw hour hand
-    double hourAngle = ((hour % 12) + (minute / 60)) * pi / 6;
-    drawHand(
-      canvas,
-      size.center(Offset.zero),
-      hourAngle,
-      size.width * .25,
-      Paint()
-        ..color = Colors.blue
-        ..strokeWidth = 8
-        ..style = PaintingStyle.stroke,
-    );
-
-    // Draw minute hand
-    double minuteAngle = minute * pi / 30;
-    drawHand(
-      canvas,
-      size.center(Offset.zero),
-      minuteAngle,
-      size.width * .35,
-      Paint()
-        ..color = Colors.red
-        ..strokeWidth = 4
-        ..style = PaintingStyle.stroke,
-    );
-
-    /// Draw center point
-    canvas.drawCircle(size.center(Offset.zero), size.width * .05,
-        Paint()..color = Colors.black);
-  }
-
-  void drawHand(
-      Canvas canvas, Offset center, double angle, double length, Paint paint) {
-    final xEnd = center.dx + cos(angle - pi / 2) * length;
-    final yEnd = center.dy + sin(angle - pi / 2) * length;
-    canvas.drawLine(center, Offset(xEnd, yEnd), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

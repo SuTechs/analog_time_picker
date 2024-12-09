@@ -27,7 +27,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  TimeOfDay _selectedTime = TimeOfDay.now();
+  static final _now = TimeOfDay.now();
+  TimeOfDay _selectedTime = _now;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               showTimePicker(
                 context: context,
-                initialTime: _selectedTime,
+                initialTime: _now,
               ).then((TimeOfDay? time) {
                 if (time != null) {
                   setState(() {
@@ -82,7 +83,13 @@ class _HomeScreenState extends State<HomeScreen> {
           /// Better Time Picker Floating Action Button
           FloatingActionButton.extended(
             onPressed: () async {
-              final time = await AnalogTimePickerDialog.show(context);
+              final time = await AnalogTimePickerDialog.show(
+                context,
+                initialTime: _now,
+                minTime: TimeOfDay(hour: _now.hour, minute: _now.minute + 10),
+                // maxTime:
+                //     TimeOfDay(hour: _now.hour + 2, minute: _now.minute + 10),
+              );
               if (time != null) {
                 setState(() {
                   _selectedTime = time;
